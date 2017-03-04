@@ -1,6 +1,7 @@
 'use strict';
 var libQ = require('kew');
-var MPD = require('node-mpd');
+// var MPD = require('node-mpd');
+var mpd = require('mpd');
 
 
 module.exports = ControllerAutoPlay;
@@ -28,6 +29,25 @@ ControllerAutoPlay.prototype.onVolumioStart = function () {
 
   self.logger.info('ControllerAutoPlay - connecting mpd on host: ' + mpdHost + '; port: ' + mpdPort);
 
+  var client = mpd.connect({
+    host : mpdHost,
+    port : mpdPort
+  });
+
+  client.on('ready', function() {
+    self.logger.info('ControllerAutoPlay - mpd ready');
+
+    setTimeout(function () {
+      self.logger.info('ControllerAutoPlay - getting queue');
+      var queue = self.commandRouter.volumioGetQueue();
+      if (queue && queue.length > 0) {
+        self.logger.info('ControllerAutoPlay - start playing -> queue is not empty');
+        self.commandRouter.volumioPlay();
+      }
+    }, 5000);
+  });
+
+  /*
   var mpd = new MPD({
     host : mpdHost,
     port : mpdPort
@@ -48,7 +68,7 @@ ControllerAutoPlay.prototype.onVolumioStart = function () {
   });
 
   mpd.connect();
-
+  */
   return libQ.resolve();
 };
 
